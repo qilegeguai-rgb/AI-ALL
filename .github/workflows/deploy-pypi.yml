@@ -58,7 +58,8 @@ jobs:
   publish-to-pypi:
     name: >-
       Publish Python distribution to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    # if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    if: false  # 设置 if 为 false，作业不会执行
     needs:
       - build-distribution
       - deploy-binaries
