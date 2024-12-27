@@ -19,5 +19,5 @@ from Furious.__main__ import main
 
 
 if __name__ == '__main__':
-    print("12345")
+    print("123456")
     main()
