@@ -276,6 +276,8 @@ jobs:
 
       # 在创建 Release 时使用动态生成的 Release Notes
       - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         id: create_release
         uses: actions/create-release@v1
         with:
