@@ -196,6 +196,10 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for sigstore
 
     steps:
+      # 确保 Git 仓库已经被检出
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
       - name: Download all the dists
         uses: actions/download-artifact@v3
         with:
