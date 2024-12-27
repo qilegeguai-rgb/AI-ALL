@@ -18,6 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-cache-
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -96,6 +104,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-cache-
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -226,7 +242,7 @@ jobs:
           body_path: ./release_notes.md
           draft: false
           prerelease: false
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}  # 提供 token 来进行身份验证
+          token: ${{ secrets.RELEASE_TOKEN }}  # 使用 RELEASE_TOKEN 进行
       - name: Upload artifact to GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
