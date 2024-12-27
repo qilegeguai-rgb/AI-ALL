@@ -230,7 +230,7 @@ jobs:
         # 执行部署脚本，开始部署最新的版本
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: binary-distributions
           path: |
@@ -249,10 +249,17 @@ jobs:
     # 在 Ubuntu 最新版本的虚拟环境中运行发布作业
 
     permissions:
-      contents: write  # 需要写入 GitHub 内容库权限，用于创建发布
-      id-token: write  # 需要写入 id-token 权限，用于与 GitHub 安全合作 (Sigstore)
+      contents: write  # 允许当前 job 对 GitHub 仓库的内容（例如发布 Release、上传文件）具有写权限。
+      id-token: write  # 允许生成 OIDC（OpenID Connect）令牌，用于安全的发布操作。
 
     steps:
+      # 下载二进制文件
+      - name: Download all the dists # 表示下载所有二进制文件。
+        uses: actions/download-artifact@v3 # 调用 GitHub 官方的下载工件插件 download-artifact。
+        with:
+          name: binary-distributions # 指定要下载的工件名称。
+          path: dist/ # 将下载的文件存储到工作目录下的 dist/ 文件夹中。
+
       # 确保 Git 仓库已经被检出
       - name: Checkout code
         uses: actions/checkout@v3
@@ -264,26 +271,27 @@ jobs:
           path: dist/
         # 下载之前上传到 GitHub Actions 的二进制文件分发包
 
-      # 使用 git log 自动生成 Release Notes
+      # 使用 git log 自动生成 Release Notes,生成发布说明并设置为环境变量
       - name: Generate Release Notes
         id: generate_notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 生成发布说明，使用 git log 从上次发布以来的提交信息生成说明
           echo "## 🚀 Release Notes" > release_notes.md
-          # 生成自上次标签以来的提交日志，格式为：- commit_message (by author_name)
           git log $(git describe --tags --abbrev=0)..HEAD --reverse --pretty=format:"- %s (by %an)" >> release_notes.md
-        shell: bash
+          # 使用 $GITHUB_ENV 设置一个新的环境变量
+          echo "RELEASE_NOTES=$(cat release_notes.md)" >> $GITHUB_ENV
 
       # 在创建 Release 时使用动态生成的 Release Notes
       - name: Create GitHub Release
+        id: create_release  # id 用来为步骤指定唯一的标识符
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        id: create_release
-        uses: actions/create-release@v1
         with:
           tag_name: ${{ github.ref_name }}  # 使用当前标签名
           release_name: Release ${{ github.ref_name }}  # Release 的名称
-          body: ${{ steps.generate_notes.outputs.body }}  # 使用生成的 release notes
+          body: ${{ env.RELEASE_NOTES }}  # 使用环境变量作为发布说明
           draft: false  # 设置为 false，表示不是草稿
           prerelease: false  # 设置为 false，表示不是预发布
 
