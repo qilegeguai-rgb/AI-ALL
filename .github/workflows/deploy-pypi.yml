@@ -226,6 +226,7 @@ jobs:
           body_path: ./release_notes.md
           draft: false
           prerelease: false
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}  # 提供 token 来进行身份验证
       - name: Upload artifact to GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
