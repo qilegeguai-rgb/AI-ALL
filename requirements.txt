@@ -1,10 +1,15 @@
-PySide6-Essentials
-qdarkstyle
-ujson
-pybase64
-pyqrcode
+PySide6-Essentials~=6.8.1
+qdarkstyle~=3.2.3
+ujson~=5.10.0
+pybase64~=1.4.0
+pyqrcode~=1.2.1
 pypng
-icmplib
+icmplib~=3.0.4
+nuitka
+imageio
 sysproxy; sys_platform == "win32"
 darkdetect; sys_platform != "darwin"
 darkdetect[macos-listener]; sys_platform == "darwin"
+
+darkdetect~=0.8.0
+setuptools~=68.2.0

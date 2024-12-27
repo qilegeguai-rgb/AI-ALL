@@ -277,14 +277,13 @@ jobs:
       # 在创建 Release 时使用动态生成的 Release Notes
       - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@v1.1.1  # 更新到最新版本
+        uses: actions/create-release@v1
         with:
-          tag_name: ${{ github.ref_name }}  # 使用当前标签作为发布的标签
-          release_name: Release ${{ github.ref_name }}  # 发布的名字通常为 "Release" 加上标签名
-          body_path: ./release_notes.md  # 使用生成的 release_notes.md 作为发布说明
-          draft: false  # 设置为 false 表示这是正式发布，不是草稿
-          prerelease: false  # 设置为 false 表示这是正式发布，而非预发布版本
-          auth: ${{ secrets.RELEASE_TOKEN }}  # 使用 RELEASE_TOKEN 进行认证
+          tag_name: ${{ github.ref_name }}  # 使用当前标签名
+          release_name: Release ${{ github.ref_name }}  # Release 的名称
+          body: ${{ steps.generate_notes.outputs.body }}  # 使用生成的 release notes
+          draft: false  # 设置为 false，表示不是草稿
+          prerelease: false  # 设置为 false，表示不是预发布
 
       - name: Upload artifact to GitHub Release
         env:
