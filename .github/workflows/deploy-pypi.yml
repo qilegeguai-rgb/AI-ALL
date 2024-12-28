@@ -75,7 +75,7 @@ jobs:
 
       # 10. 上传构建的包为工件
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v3  # 使用 GitHub 的 upload-artifact action 上传构建的包
+        uses: actions/upload-artifact@v4  # 使用 GitHub 的 upload-artifact action 上传构建的包
         with:
           name: python-package-distributions  # 上传的包名
           path: |
@@ -100,7 +100,7 @@ jobs:
     steps:
       # 1. 下载构建的分发包
       - name: Download all the dists
-        uses: actions/download-artifact@v3  # 下载先前上传的分发包
+        uses: actions/download-artifact@v4  # 下载先前上传的分发包
         with:
           name: python-package-distributions  # 上传的包名
           path: dist/  # 下载到 dist/ 目录
@@ -229,7 +229,7 @@ jobs:
         # 执行部署脚本，开始部署最新的版本
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: binary-distributions
           path: |
@@ -237,8 +237,7 @@ jobs:
             *.dmg
 
   github-release:
-    name: >-
-      Upload to GitHub Release
+    name: Upload to GitHub Release
     needs:
       - deploy-binaries
       # 依赖于 deploy-binaries 作业，即所有二进制文件都已准备好后才能执行
@@ -256,7 +255,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download all the dists
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: binary-distributions
           path: dist/
@@ -275,7 +274,7 @@ jobs:
       # 在创建 Release 时使用动态生成的 Release Notes
       - name: Create GitHub Release
         id: create_release  # id 用来为步骤指定唯一的标识符
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
