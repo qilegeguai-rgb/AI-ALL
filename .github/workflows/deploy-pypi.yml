@@ -270,13 +270,16 @@ jobs:
         run: |
           echo "## 🚀 Release Notes" > release_notes.md
           git log $(git describe --tags --abbrev=0)..HEAD --reverse --pretty=format:"- %s (by %an)" >> release_notes.md
+          cat release_notes.md
           echo "RELEASE_NOTES=$(cat release_notes.md)" >> $GITHUB_ENV
+          
+          
 
       # 打印 RELEASE_NOTES 的值
       - name: Print RELEASE_NOTES
         run: |
-          echo "Release Notes are as follows gg:"
-          echo "$RELEASE_NOTES" 
+          echo "Release Notes are as follows:"
+          echo "${{ env.RELEASE_NOTES }}"
 
       # 在创建 Release 时使用动态生成的 Release Notes
       - name: Create GitHub Release
