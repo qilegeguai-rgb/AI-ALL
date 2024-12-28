@@ -27,7 +27,7 @@ jobs:
           path: ~/.cache/pip  # 缓存路径
           key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}  # 缓存键，依赖文件变化时更新
           restore-keys: |
-            ${{ runner.os }}-pip-cache-  # 备份的缓存键
+            ${{ runner.os }}-pip-cache- 
 
       # 3. 设置 Python 环境
       - name: Set up Python
@@ -69,14 +69,18 @@ jobs:
       - name: Build a binary wheel and a source tarball
         run: python3 setup.py sdist bdist_wheel  # 构建源代码包和 wheel 包
 
+      # 11. 列出 dist/ 目录下的文件
+      - name: List files in dist/
+        run: ls -l dist/
+
       # 10. 上传构建的包为工件
       - name: Store the distribution packages
         uses: actions/upload-artifact@v3  # 使用 GitHub 的 upload-artifact action 上传构建的包
         with:
           name: python-package-distributions  # 上传的包名
           path: |
-            dist/*.tar.gz  # 包含所有 .tar.gz 格式的源代码包
-            dist/*.whl  # 包含所有 .whl 格式的二进制包
+            dist/*.tar.gz
+            dist/*.whl
 
   # 作业2：将包发布到 PyPI
   publish-to-pypi:
@@ -114,8 +118,10 @@ jobs:
         os: [windows-2022, macos-13, macos-14]  # 在 Windows 和 macOS 上部署
 
     env:
-      PYSIDE6_LEGACY_VERSION: "6.4.3"  # 设置环境变量，指定老版本的 PySide6
-      PYSIDE6_TARGET_VERSION: "6.8.1"  # 设置目标版本的 PySide6
+      # 设置环境变量，指定老版本的 PySide6
+      PYSIDE6_LEGACY_VERSION: "6.4.3"
+      # 设置目标版本的 PySide6
+      PYSIDE6_TARGET_VERSION: "6.8.1"
 
     steps:
       # 1. Checkout 仓库代码
@@ -126,9 +132,9 @@ jobs:
         uses: actions/cache@v3  # 使用缓存加速依赖安装
         with:
           path: ~/.cache/pip  # 缓存路径
-          key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}  # 缓存键
+          key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-cache-  # 备份的缓存键
+            ${{ runner.os }}-pip-cache-
 
       # 3. 设置 Python 环境
       - name: Set up Python
@@ -140,17 +146,17 @@ jobs:
       # 4. 创建并激活 Python 虚拟环境
       - name: Set up Python venv
         run: |
-          python3 -m venv .venv  # 创建虚拟环境
+          python3 -m venv .venv  
           if [ "$RUNNER_OS" == "macOS" ]; then
-            source .venv/bin/activate  # macOS 上激活虚拟环境
+            source .venv/bin/activate  
           elif [ "$RUNNER_OS" == "Windows" ]; then
-            .venv/Scripts/activate  # Windows 上激活虚拟环境
+            .venv/Scripts/activate  
           else
-            echo "$RUNNER_OS not supported"  # 如果是其他操作系统则退出
+            echo "$RUNNER_OS not supported" 
             exit 1
           fi
-          python3 --version  # 查看 Python 版本
-          python3 -m pip install --upgrade pip  # 升级 pip
+          python3 --version  
+          python3 -m pip install --upgrade pip  
 
       # 5. 安装 macOS 特定的依赖
       - name: Install macOS dependencies
@@ -183,12 +189,10 @@ jobs:
       # 10. 安装 numpy<2
       - name: Install numpy<2
         run: |
-          # 安装 numpy 版本小于 2 的版本，以确保兼容性
           python3 -m pip install "numpy<2"
 
       - name: Install nuitka, imageio
         run: |
-          # 安装 Nuitka 和 imageio，Nuitka 用于将 Python 代码编译成二进制文件，imageio 用于图像处理
           python3 -m pip install nuitka imageio
 
       - name: Set up go 1.20
@@ -200,9 +204,7 @@ jobs:
 
       - name: Install go 1.20 dependencies
         run: |
-          # 安装 Go 语言版本 1.20 的依赖，并验证 Go 版本是否正确安装
           go version
-          # 安装 hysteria 模块的版本大于 1.3.5
           python3 -m pip install "hysteria > 1.3.5"
 
       - name: Set up go 1.23
@@ -214,14 +216,11 @@ jobs:
 
       - name: Install go 1.23 dependencies
         run: |
-          # 安装 Go 语言版本 1.23 的依赖，并验证 Go 版本是否正确安装
           go version
-          # 安装 Xray-core 和 hysteria2 模块，确保它们的版本满足要求
           python3 -m pip install "Xray-core >= 1.8.8" "hysteria2 >= 2.0.4" "tun2socks > 2.5.2"
 
       - name: Download latest asset files
         run: |
-          # 安装 requests 模块并运行部署脚本下载最新的资产文件
           python3 -m pip install requests
           python3 Deploy.py --download
 
@@ -253,10 +252,6 @@ jobs:
       id-token: write  # 允许生成 OIDC（OpenID Connect）令牌，用于安全的发布操作。
 
     steps:
-      # 确保 Git 仓库已经被检出
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
       - name: Download all the dists
         uses: actions/download-artifact@v3
         with:
@@ -272,7 +267,6 @@ jobs:
         run: |
           echo "## 🚀 Release Notes" > release_notes.md
           git log $(git describe --tags --abbrev=0)..HEAD --reverse --pretty=format:"- %s (by %an)" >> release_notes.md
-          # 使用 $GITHUB_ENV 设置一个新的环境变量
           echo "RELEASE_NOTES=$(cat release_notes.md)" >> $GITHUB_ENV
 
       # 在创建 Release 时使用动态生成的 Release Notes
@@ -292,7 +286,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}  # 使用 GitHub Secrets 中的 RELEASE_TOKEN
         run: >-
-          # 使用 GitHub CLI 上传构建的二进制文件到 GitHub Release
           gh release upload
-          '${{ github.ref_name }}' dist/**  # 使用当前标签上传所有构建的文件
-          --repo '${{ github.repository }}'  # 指定当前仓库进行上传
+          '${{ github.ref_name }}' dist/**  
+          --repo '${{ github.repository }}'  
