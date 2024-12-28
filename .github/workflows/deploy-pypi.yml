@@ -230,7 +230,7 @@ jobs:
         # 执行部署脚本，开始部署最新的版本
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: binary-distributions
           path: |
@@ -253,13 +253,6 @@ jobs:
       id-token: write  # 允许生成 OIDC（OpenID Connect）令牌，用于安全的发布操作。
 
     steps:
-      # 下载二进制文件
-      - name: Download all the dists # 表示下载所有二进制文件。
-        uses: actions/download-artifact@v3 # 调用 GitHub 官方的下载工件插件 download-artifact。
-        with:
-          name: binary-distributions # 指定要下载的工件名称。
-          path: dist/ # 将下载的文件存储到工作目录下的 dist/ 文件夹中。
-
       # 确保 Git 仓库已经被检出
       - name: Checkout code
         uses: actions/checkout@v3
