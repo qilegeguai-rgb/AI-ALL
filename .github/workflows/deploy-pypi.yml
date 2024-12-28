@@ -233,7 +233,6 @@ jobs:
         with:
           name: binary-distributions
           path: |
-            # 上传二进制分发包到 GitHub，以便在发布时使用
             *.zip
             *.dmg
 
@@ -252,6 +251,10 @@ jobs:
       id-token: write  # 允许生成 OIDC（OpenID Connect）令牌，用于安全的发布操作。
 
     steps:
+      # 确保 Git 仓库已经被检出
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Download all the dists
         uses: actions/download-artifact@v3
         with:
