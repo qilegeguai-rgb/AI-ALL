@@ -75,7 +75,7 @@ jobs:
 
       # 10. 上传构建的包为工件
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v4  # 使用 GitHub 的 upload-artifact action 上传构建的包
+        uses: actions/upload-artifact@v3  # 使用 GitHub 的 upload-artifact action 上传构建的包
         with:
           name: python-package-distributions  # 上传的包名
           path: |
@@ -100,7 +100,7 @@ jobs:
     steps:
       # 1. 下载构建的分发包
       - name: Download all the dists
-        uses: actions/download-artifact@v4  # 下载先前上传的分发包
+        uses: actions/download-artifact@v3  # 下载先前上传的分发包
         with:
           name: python-package-distributions  # 上传的包名
           path: dist/  # 下载到 dist/ 目录
@@ -229,7 +229,7 @@ jobs:
         # 执行部署脚本，开始部署最新的版本
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: binary-distributions
           path: |
@@ -237,7 +237,8 @@ jobs:
             *.dmg
 
   github-release:
-    name: Upload to GitHub Release
+    name: >-
+      Upload to GitHub Release
     needs:
       - deploy-binaries
       # 依赖于 deploy-binaries 作业，即所有二进制文件都已准备好后才能执行
@@ -255,7 +256,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download all the dists
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: binary-distributions
           path: dist/
@@ -270,6 +271,12 @@ jobs:
           echo "## 🚀 Release Notes" > release_notes.md
           git log $(git describe --tags --abbrev=0)..HEAD --reverse --pretty=format:"- %s (by %an)" >> release_notes.md
           echo "RELEASE_NOTES=$(cat release_notes.md)" >> $GITHUB_ENV
+
+      # 打印 RELEASE_NOTES 的值
+      - name: Print RELEASE_NOTES
+        run: |
+          echo "Release Notes are as follows gg:"
+          echo "$RELEASE_NOTES" 
 
       # 在创建 Release 时使用动态生成的 Release Notes
       - name: Create GitHub Release
@@ -290,4 +297,4 @@ jobs:
         run: >-
           gh release upload
           '${{ github.ref_name }}' dist/**  
-          --repo '${{ github.repository }}'  
+          --repo '${{ github.repository }}'
