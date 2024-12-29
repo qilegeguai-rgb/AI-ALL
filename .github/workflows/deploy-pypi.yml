@@ -239,6 +239,7 @@ jobs:
   github-release:
     name: >-
       Upload to GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - deploy-binaries
       # 依赖于 deploy-binaries 作业，即所有二进制文件都已准备好后才能执行
@@ -251,64 +252,43 @@ jobs:
       id-token: write  # 允许生成 OIDC（OpenID Connect）令牌，用于安全的发布操作。
 
     steps:
-      - run: echo "previous_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo '')" >> $GITHUB_ENV
-      - name: Generate changelog
-        id: changelog
-        uses: jaywcjlove/changelog-generator@main
-        if: env.previous_tag
+      # 下载二进制文件
+      - name: Download all the dists # 表示下载所有二进制文件。
+        uses: actions/download-artifact@v3 # 调用 GitHub 官方的下载工件插件 download-artifact。
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          filter-author: (jaywcjlove|小弟调调™|dependabot|renovate\\[bot\\]|dependabot\\[bot\\]|Renovate Bot)
-          filter: '[R|r]elease[d]\s+[v|V]\d(\.\d+){0,2}'
-
-      # 确保 Git 仓库已经被检出
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Download all the dists
-        uses: actions/download-artifact@v3
-        with:
-          name: binary-distributions
-          path: dist/
-        # 下载之前上传到 GitHub Actions 的二进制文件分发包
-
-      # 使用 git log 自动生成 Release Notes,生成发布说明并设置为环境变量
-      - name: Generate Release Notes
-        id: generate_notes
+          name: binary-distributions # 指定要下载的工件名称。
+          path: dist/ # 将下载的文件存储到工作目录下的 dist/ 文件夹中。
+      # 创建 GitHub Release
+      - name: Create GitHub Release # 表示创建 GitHub Release。
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "## 🚀 Release Notes" > release_notes.md
-          git log $(git describe --tags --abbrev=0)..HEAD --reverse --pretty=format:"- %s (by %an)" >> release_notes.md
-          cat release_notes.md
-          echo "RELEASE_NOTES=$(cat release_notes.md)" >> $GITHUB_ENV
-        shell: bash
+          GITHUB_TOKEN: ${{ github.token }} # 使用 GitHub Secrets 中的 RELEASE_TOKEN，提供身份验证权限。
+        # 把多行文本合并于单行文本
+        # ${{ github.ref_name }}：Release 的版本号，通常由 Git 标签（refs/tags/...）自动提供。
+        #--repo '${{ github.repository }}'：指定操作的仓库，即当前仓库。
+        #--notes ""：指定 Release 的备注信息为空。
+        #--prerelease：将该 Release 标记为“预发布版本”。
+        #--generate-notes：自动生成发布说明（如从提交历史中提取变更日志）。
+        #--title 'Furious ${{ github.ref_name }}'：为 Release 指定标题，格式为“Furious + 版本号”。
+        run: >-
+          gh release create
+          '${{ github.ref_name }}'
+          --repo '${{ github.repository }}'
+          --notes ""
+          --prerelease
+          --generate-notes
+          --title 'Furious ${{ github.ref_name }}'
 
-
-
-      # 打印 RELEASE_NOTES 的值
-      - name: Print RELEASE_NOTES
-        run: |
-          echo "Release Notes are as follows:"
-          echo "${{ env.RELEASE_NOTES }}"
-
-      # 在创建 Release 时使用动态生成的 Release Notes
-      - name: Create GitHub Release
-        id: create_release  # id 用来为步骤指定唯一的标识符
-        uses: actions/create-release@v1.1.0
+      # 上传文件到 GitHub Release
+      - name: Upload artifact signatures to GitHub Release # 表示将生成的工件文件上传到之前创建的 Release 中。
+        # 使用 GitHub Secrets 中的 RELEASE_TOKEN，提供身份验证权限。
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}  # 使用当前标签名
-          release_name: Release ${{ github.ref_name }}  # Release 的名称
-          body: ${{ env.RELEASE_NOTES }}  # 使用环境变量作为发布说明
-          draft: false  # 设置为 false，表示不是草稿
-          prerelease: false  # 设置为 false，表示不是预发布
-
-      - name: Upload artifact to GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}  # 使用 GitHub Secrets 中的 RELEASE_TOKEN
+          GITHUB_TOKEN: ${{ github.token }}
+        # Upload to GitHub Release using the `gh` CLI.
+        # gh release upload：向指定的 Release 上传文件。
+        # ${{ github.ref_name }}：指定目标 Release 的版本号。
+        # dist/**：上传 dist/ 文件夹下的所有文件。
+        # --repo '${{ github.repository }}'：指定目标仓库。
         run: >-
           gh release upload
-          '${{ github.ref_name }}' dist/**  
+          '${{ github.ref_name }}' dist/**
           --repo '${{ github.repository }}'
